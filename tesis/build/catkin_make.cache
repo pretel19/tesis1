@@ -1,0 +1,2 @@
+frlabs/lab1:frlabs/lab2:frlabs/lab3:frlabs/lab4:frlabs/lab5:frlabs/lab6:frlabs/lab7:universal_robot/universal_robots:universal_robot/ur10_moveit_config:universal_robot/ur10e_moveit_config:universal_robot/ur16e_moveit_config:universal_robot/ur3_moveit_config:universal_robot/ur3e_moveit_config:universal_robot/ur5_moveit_config:universal_robot/ur5e_moveit_config:universal_robot/ur_description:universal_robot/ur_gazebo:universal_robot/ur_kinematics
+-DCATKIN_DEVEL_PREFIX=/home/user/tesis/devel -DCMAKE_INSTALL_PREFIX=/home/user/tesis/install -G Unix Makefiles

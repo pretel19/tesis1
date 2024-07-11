@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+
+import rospy
+from sensor_msgs.msg import JointState
+
+from lab4functions import *
+import rospy
+import actionlib
+import numpy as np 
+
+
+from ur5_params import *
+
+from std_msgs.msg import String
+from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+
+
+
+def callback(msg):
+
+    global press_key, xd, suma, q
+    press_key = msg.data
+    #movimiento en x y y
+    if press_key == "w":
+        xd[0] = xd[0] - suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[0] = xd[0] + suma
+    elif press_key == "s":
+        xd[0] = xd[0] + suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[0] = xd[0] - suma
+    elif press_key == "d":
+        xd[1] = xd[1] - suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[1] = xd[1] + suma
+    elif press_key == "a":
+        xd[1] = xd[1] + suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[1] = xd[1] - suma
+    
+    #movimiento diagonales
+
+    elif press_key == "f":
+        xd[1] = xd[1] + suma
+        xd[0] = xd[0] + suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[1] = xd[1] - suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[0] = xd[0] - suma
+    
+    elif press_key == "g":
+        xd[1] = xd[1] - suma
+        xd[0] = xd[0] + suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[1] = xd[1] + suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[0] = xd[0] - suma
+
+    elif press_key == "h":
+        xd[1] = xd[1] + suma
+        xd[0] = xd[0] - suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[1] = xd[1] - suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[0] = xd[0] + suma
+    
+    elif press_key == "j":
+        xd[1] = xd[1] - suma
+        xd[0] = xd[0] - suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[1] = xd[1] + suma
+        if check_ur_ws(xd,r_ws) == False:
+            xd[0] = xd[0] + suma
+
+
+    #volver posicion inicial
+
+    elif press_key == "p":
+        q = np.radians(np.array([-90.0, -90.0, 90.0, -90.0, -90.0, 0.0]))
+        xd = np.array([-0.10915, 0.4869, 0.431859])
+    else:
+        xd = xd
+
+
+
+press_key = "5"
+
+suma = 0.01 
+#parametros iniciales
+xd = np.array([-0.10915, 0.4869, 0.431859]) 
+q0 = np.radians(np.array([-90.0, -90.0, 90.0, -90.0, -90.0, 0.0])) 
+
+
+if __name__ == '__main__':
+    
+    rospy.init_node("key_ur5_control", disable_signals=True)
+
+    #subscriptor topico, funcion
+    rospy.Subscriber("/keys", String, callback)
+
+    #robot_client = actionlib.SimpleActionClient('/robot2/scaled_pos_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+    robot_client = actionlib.SimpleActionClient('/ur5_robot/pos_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+    print("Waiting for server...")
+    robot_client.wait_for_server()
+    print("Connected to server")
+
+    joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+    
+    #Configuracion articular inicial
+    Q0 = q0.tolist()
+
+    g = FollowJointTrajectoryGoal()
+    g.trajectory = JointTrajectory()
+    g.trajectory.joint_names = joint_names
+
+    # Initial position
+    g.trajectory.points = [JointTrajectoryPoint(positions=Q0,time_from_start=rospy.Duration(1.0))]
+    robot_client.send_goal(g)
+    robot_client.wait_for_result()
+    rospy.sleep(1)
+    
+    # Frequency (in Hz) and control period 
+    freq = 100
+    dt = 1.0/freq
+    rate = rospy.Rate(freq)
+    t = 1.0 + dt
+
+    # Initial joint configuration
+    q = np.radians(np.array([-90.0, -90.0, 90.0, -90.0, -90.0, 0.0]))
+
+    while not rospy.is_shutdown():
+
+        # Inverse kinematics
+        q = ikine(xd,q,l)
+        #Limitar valores articulares
+        q = limit_joint_pos(q,q_lim)
+
+        #Se le asigna al Q0 la configuracion articular hallada
+        Q0 = q.tolist()
+
+        g.trajectory.points = [JointTrajectoryPoint(positions=Q0,time_from_start=rospy.Duration(t))]
+        robot_client.send_goal(g)
+        robot_client.wait_for_result()
+    
+        t = t + dt    
+        
+        rate.sleep()

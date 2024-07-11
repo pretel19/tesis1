@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+    <!-- include macros for ur5 and the robotiq model -->
+    <xacro:include filename="$(find utec)/urdf/inc/ur5_macro_mod.xacro" />
+    <xacro:include filename="$(find robotiq_2f_85_gripper_visualization)/urdf/robotiq_arg2f_85_model_macro.xacro" />
+
+    <!-- create the manipulator + gripper combo itself as a macro -->
+    <xacro:macro name="ur5robotiq" params="prefix">
+
+    <!-- instantiate ur5 and robotiq model -->
+    <xacro:ur5_robot prefix="" />
+    <xacro:robotiq_arg2f_85 prefix="" />
+
+    </xacro:macro>
+
+    <!-- attach robotiq to ur5 model -->
+    <joint name="ur5_robot_tool0-robotiq_arg2f_base_link" type="fixed">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <parent link="tool0" />
+        <child link="robotiq_arg2f_base_link" />  
+    </joint>
+
+</robot>

@@ -1,0 +1,5 @@
+<?xml version="1.0" ?>
+<robot name="ur5robotiq" xmlns:xacro="http://wiki.ros.org/xacro">
+    <xacro:include filename="$(find utec)/urdf/ur5robotiq.xacro" />
+    <xacro:ur5robotiq prefix="" />
+</robot>
